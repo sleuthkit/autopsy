@@ -1,0 +1,319 @@
+# Flatpak manifest for Autopsy digital forensics platform.
+# Build with: flatpak-builder --force-clean build-dir org.sleuthkit.Autopsy.yaml
+# Bundle with: flatpak build-bundle ~/.local/share/flatpak/repo autopsy.flatpak org.sleuthkit.Autopsy
+# Install with: flatpak install --user autopsy.flatpak
+# Run with: flatpak run org.sleuthkit.Autopsy
+#
+# Note: Hugepages for Solr (/sys/kernel/mm/hugepages) are not accessible in Flatpak's
+# sandbox. Solr runs without hugepages, which is a performance trade-off, not a blocker.
+# Users needing raw block-device access should run: flatpak run --device=all org.sleuthkit.Autopsy
+
+id: org.sleuthkit.Autopsy
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.openjdk17
+command: autopsywrapper.sh
+
+build-options:
+  # --share=network allows the autopsy module's ant build-zip to download the NetBeans
+  # platform and Maven deps at build time. Acceptable since this is a non-Flathub package.
+  build-args:
+    - --share=network
+  env:
+    JAVA_HOME: /usr/lib/sdk/openjdk17/jvm/openjdk-17
+    PATH: /usr/lib/sdk/openjdk17/bin:/app/ant/bin:/app/bin:/usr/bin:/bin
+
+finish-args:
+  - --device=all
+  - --filesystem=home
+  - --filesystem=/media:ro
+  - --filesystem=/mnt:ro
+  - --filesystem=/run/media:ro
+  - --share=network
+  - --share=ipc
+  - --socket=x11
+  - --socket=pulseaudio
+  - --env=jdkhome=/app/jdk
+  - --env=JAVA_HOME=/app/jdk
+  - --env=SOLR_JAVA_HOME=/app/jdk
+  - --env=LD_LIBRARY_PATH=/app/lib
+  - --env=PERL5LIB=/app/lib/perl5/5.42/x86_64-linux-gnu:/app/lib/perl5/5.42:/app/lib/perl5/vendor_perl/5.42/x86_64-linux-gnu:/app/lib/perl5/vendor_perl/5.42
+  - --env=SOLR_LOGS_DIR=/var/data/autopsy/solr/logs
+  - --env=SOLR_PID_DIR=/var/data/autopsy/solr/logs
+
+modules:
+
+  - name: openjdk
+    buildsystem: simple
+    build-commands:
+      # install.sh places the JDK at /app/jre; symlink /app/jdk so that the
+      # jdkhome env var and Autopsy's launcher both resolve correctly.
+      - /usr/lib/sdk/openjdk17/install.sh
+      - ln -s /app/jre /app/jdk
+    sources: []
+
+  - name: ant
+    buildsystem: simple
+    sources:
+      - type: archive
+        url: https://archive.apache.org/dist/ant/binaries/apache-ant-1.10.15-bin.tar.gz
+        sha256: 71334d7e5d98cfe53d6c429a648a5021137a967378667306c5f613dff5180506
+    build-commands:
+      - mkdir -p /app/ant
+      - cp -rp . /app/ant/
+
+  # libewf-legacy provides the API (libewf_handle_read_random) expected by both
+  # sleuthkit 4.15.0 and testdisk 7.2. The newer experimental libewf removed that API.
+  - name: libewf
+    buildsystem: autotools
+    config-opts:
+      - --enable-python=no
+      - --enable-static=no
+    sources:
+      - type: archive
+        url: https://github.com/libyal/libewf-legacy/releases/download/20140816/libewf-20140816.tar.gz
+        sha256: 6b2d078fb3861679ba83942fea51e9e6029c37ec2ea0c37f5744256d6f7025a9
+
+  - name: libafflib
+    buildsystem: simple
+    sources:
+      - type: archive
+        url: https://github.com/sshock/AFFLIBv3/archive/refs/tags/v3.7.22.tar.gz
+        sha256: 67481fc520ff927bf61aea0bf2d660feb73e24cc329335bebb064f8f12115dcb
+    build-commands:
+      - autoreconf -i
+      - ./configure --prefix=/app --enable-static=no
+      - make -j$(nproc)
+      - make install
+
+  - name: libvmdk
+    buildsystem: autotools
+    config-opts:
+      - --enable-static=no
+    sources:
+      - type: archive
+        url: https://github.com/libyal/libvmdk/releases/download/20240510/libvmdk-alpha-20240510.tar.gz
+        sha256: 985966c252cb9cf252e594830f0889f7b74250604b1d5705c799b120e66b9b9c
+
+  - name: libvhdi
+    buildsystem: autotools
+    config-opts:
+      - --enable-static=no
+    sources:
+      - type: archive
+        url: https://github.com/libyal/libvhdi/releases/download/20251119/libvhdi-alpha-20251119.tar.gz
+        sha256: 026cc41e506bef433999090a777519a3cb471510dc352fa44d6867cf6a0e7990
+
+  - name: libvslvm
+    buildsystem: autotools
+    config-opts:
+      - --enable-static=no
+    sources:
+      - type: archive
+        url: https://github.com/libyal/libvslvm/releases/download/20240504/libvslvm-experimental-20240504.tar.gz
+        sha256: 7217676f74ba145f9c2ba6b1c6296d7fa041c2ab2673d34dc06b53511aa65833
+
+  - name: testdisk
+    buildsystem: autotools
+    sources:
+      - type: archive
+        url: https://www.cgsecurity.org/testdisk-7.2.tar.bz2
+        sha256: f8343be20cb4001c5d91a2e3bcd918398f00ae6d8310894a5a9f2feb813c283f
+
+  - name: sleuthkit
+    buildsystem: simple
+    sources:
+      - type: git
+        url: https://github.com/sleuthkit/sleuthkit.git
+        tag: sleuthkit-4.15.0
+      # ivy bootstrap JAR — placed in ANT_HOME/lib so init-ivy can load it without downloading
+      - type: file
+        url: https://repo1.maven.org/maven2/org/apache/ivy/ivy/2.5.0/ivy-2.5.0.jar
+        sha256: 2f4c835b52311df922f8a8eb057843de5485088b234ccd03e478b9066b5e6bfc
+        dest-filename: ivy-2.5.0.jar
+      # Maven dependencies pre-placed in bindings/java/lib/ for offline Ant build (-Doffline=true)
+      - type: file
+        url: https://repo1.maven.org/maven2/joda-time/joda-time/2.13.1/joda-time-2.13.1.jar
+        sha256: a9be47b46390f7a6dabacc7c055b4feb6fb8f2225477a7270a8233b296e26677
+        dest: bindings/java/lib
+        dest-filename: joda-time-2.13.1.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/com/google/guava/guava/33.4.0-jre/guava-33.4.0-jre.jar
+        sha256: b918c98a7e44dbe94ebd9fe3e40cddaadb5a93e6a78eb6008b42df237241e538
+        dest: bindings/java/lib
+        dest-filename: guava-33.4.0-jre.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/com/google/guava/failureaccess/1.0.2/failureaccess-1.0.2.jar
+        sha256: 8a8f81cf9b359e3f6dfa691a1e776985c061ef2f223c9b2c80753e1b458e8064
+        dest: bindings/java/lib
+        dest-filename: failureaccess-1.0.2.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.17.0/commons-lang3-3.17.0.jar
+        sha256: 6ee731df5c8e5a2976a1ca023b6bb320ea8d3539fbe64c8a1d5cb765127c33b4
+        dest: bindings/java/lib
+        dest-filename: commons-lang3-3.17.0.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/commons-validator/commons-validator/1.9.0/commons-validator-1.9.0.jar
+        sha256: c3c14748e2d78db58df88808740711bd643b32c45ffa7b8a739f00fb467cd7d7
+        dest: bindings/java/lib
+        dest-filename: commons-validator-1.9.0.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/com/google/code/gson/gson/2.12.1/gson-2.12.1.jar
+        sha256: ebee13d5fb7477cd7f1cc010e0c356df8ca80709715248da97f79e35ccb4fbec
+        dest: bindings/java/lib
+        dest-filename: gson-2.12.1.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar
+        sha256: 8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3
+        dest: bindings/java/lib
+        dest-filename: junit-4.13.2.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12.jar
+        sha256: 9990a2039778f6b4cc94790141c2868864eacee0620c6c459451121a901cd5b5
+        dest: bindings/java/lib
+        dest-filename: java-diff-utils-4.12.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.49.1.0/sqlite-jdbc-3.49.1.0.jar
+        sha256: 5c8609d2ca341deb8c6f71778974b5ba4995c7d32d7c7c89d9392a3e72c39291
+        dest: bindings/java/lib
+        dest-filename: sqlite-jdbc-3.49.1.0.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.5/postgresql-42.7.5.jar
+        sha256: 69020b3bd20984543e817393f2e6c01a890ef2e37a77dd11d6d8508181d079ab
+        dest: bindings/java/lib
+        dest-filename: postgresql-42.7.5.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/com/mchange/c3p0/0.12.0/c3p0-0.12.0.jar
+        sha256: 4d85a7d4643a22df7e9e21a159e022de462530727443ec83d190321eb305851d
+        dest: bindings/java/lib
+        dest-filename: c3p0-0.12.0.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/com/mchange/mchange-commons-java/0.4.0/mchange-commons-java-0.4.0.jar
+        sha256: fd88e385a38df7701177b076e35048a841dc5df1118c6b2d860bba08c41bc0b6
+        dest: bindings/java/lib
+        dest-filename: mchange-commons-java-0.4.0.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/com/zaxxer/SparseBitSet/1.3/SparseBitSet-1.3.jar
+        sha256: f76b85adb0c00721ae267b7cfde4da7f71d3121cc2160c9fc00c0c89f8c53c8a
+        dest: bindings/java/lib
+        dest-filename: SparseBitSet-1.3.jar
+      # case-uco sub-module uses older gson 2.8.5 and junit 4.12 with their own lib/ dir
+      - type: file
+        url: https://repo1.maven.org/maven2/com/google/code/gson/gson/2.8.5/gson-2.8.5.jar
+        sha256: 233a0149fc365c9f6edbd683cfe266b19bdc773be98eabdaf6b3c924b48e7d81
+        dest: case-uco/java/lib
+        dest-filename: gson-2.8.5.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/junit/junit/4.12/junit-4.12.jar
+        sha256: 59721f0805e223d84b90677887d9ff567dc534d7c502ca903c0c2b17f05c116a
+        dest: case-uco/java/lib
+        dest-filename: junit-4.12.jar
+      - type: file
+        url: https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar
+        sha256: 66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9
+        dest: case-uco/java/lib
+        dest-filename: hamcrest-core-1.3.jar
+    build-options:
+      env:
+        JAVA_HOME: /usr/lib/sdk/openjdk17/jvm/openjdk-17
+        # Points ivy.home to /app/ant so init-ivy finds ivy.jar in /app/ant/lib/
+        IVY_HOME: /app/ant
+    build-commands:
+      - cp ivy-2.5.0.jar /app/ant/lib/ivy.jar
+      - ./bootstrap
+      # --enable-offline makes the Makefile pass -Doffline=true to Ant, skipping Maven downloads.
+      # JARs pre-placed in bindings/java/lib/ (via sources above) are used instead.
+      - ./configure --prefix=/app --enable-java --enable-offline
+      # Redirect default-jar-location away from /usr/share/java (read-only in SDK) to the
+      # same lib/ dir that already contains all pre-placed Maven JARs.
+      - sed -i "s|location=\"/usr/share/java\"|location=\"$(pwd)/bindings/java/lib\"|" bindings/java/build.xml
+      - make -j$(nproc)
+      - make install
+      # Create TSK_HOME stub: Autopsy's build.xml (getTSKJars target) expects the source-tree
+      # layout of sleuthkit (bindings/java/dist/, case-uco/java/dist/, bindings/java/lib/).
+      # Since the build dir is gone after this module, we persist these artifacts to /app/tsk-build/.
+      - mkdir -p /app/tsk-build/bindings/java/dist /app/tsk-build/bindings/java/lib /app/tsk-build/case-uco/java/dist
+      - cp bindings/java/dist/sleuthkit-4.15.0.jar /app/tsk-build/bindings/java/dist/
+      - cp case-uco/java/dist/sleuthkit-caseuco-4.15.0.jar /app/tsk-build/case-uco/java/dist/
+      - cp bindings/java/lib/sqlite-jdbc-3.49.1.0.jar /app/tsk-build/bindings/java/lib/
+      - cp bindings/java/lib/postgresql-42.7.5.jar /app/tsk-build/bindings/java/lib/
+      - cp bindings/java/lib/c3p0-0.12.0.jar /app/tsk-build/bindings/java/lib/
+      - cp bindings/java/lib/mchange-commons-java-0.4.0.jar /app/tsk-build/bindings/java/lib/
+      - cp bindings/java/lib/SparseBitSet-1.3.jar /app/tsk-build/bindings/java/lib/
+
+  # perl is in the SDK but not the Platform runtime. Copy the binary, libperl.so,
+  # and stdlib modules so that the Recent Activity module's regripper scripts work.
+  - name: perl
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 /usr/bin/perl /app/bin/perl
+      - install -Dm755 /usr/lib/perl5/5.42/x86_64-linux-gnu/CORE/libperl.so /app/lib/libperl.so
+      - cp -a /usr/lib/perl5/ /app/lib/perl5/
+    sources: []
+
+  - name: autopsy
+    buildsystem: simple
+    sources:
+      - type: dir
+        path: .
+    build-options:
+      env:
+        JAVA_HOME: /usr/lib/sdk/openjdk17/jvm/openjdk-17
+        TSK_JAVA_LIB_PATH: /app/share/java
+        # TSK_HOME must point to the sleuthkit source/build tree layout that Autopsy's
+        # Core/build.xml (getTSKJars target) expects. We persist it from the sleuthkit
+        # module to /app/tsk-build/.
+        TSK_HOME: /app/tsk-build
+    build-commands:
+      # Patch ExtractRegistry to find perl at /app/bin/perl (Flatpak bundles perl there;
+      # the Platform runtime does not include perl, only the SDK does).
+      - |
+        python3 -c "
+        path = 'RecentActivity/src/org/sleuthkit/autopsy/recentactivity/ExtractRegistry.java'
+        with open(path) as f:
+            s = f.read()
+        old = '            } else {\n                throw new IngestModuleException(\"perl not found in your system\");\n            }'
+        new = ('            } else if (new File(\"/app/bin/perl\").canExecute()) {\n'
+               '                perl = \"/app/bin/perl\";\n'
+               '            } else {\n'
+               '                throw new IngestModuleException(\"perl not found in your system\");\n'
+               '            }')
+        assert old in s, 'Pattern not found — check ExtractRegistry.java for upstream changes'
+        with open(path, 'w') as f:
+            f.write(s.replace(old, new, 1))
+        print('Patched ExtractRegistry.java: added /app/bin/perl fallback')
+        "
+      # Build Autopsy ZIP (NetBeans platform is downloaded if missing)
+      - |
+        NETBEANS_PLAT_VER=$(grep "netbeans-plat-version=" nbproject/platform.properties | cut -d'=' -f2)
+        AUTOPSY_PLATFORM_PATH="$(pwd)/netbeans-plat/$NETBEANS_PLAT_VER"
+        AUTOPSY_HARNESS_PATH="$AUTOPSY_PLATFORM_PATH/harness"
+        ant -Dnbplatform.active.dir="$AUTOPSY_PLATFORM_PATH" \
+            -Dnbplatform.default.harness.dir="$AUTOPSY_HARNESS_PATH" \
+            build-zip
+
+      # Move the built directory into /app/autopsy.
+      # ant build-zip produces dist/autopsy-${version}/ (a directory, not a zip).
+      - |
+        set -e
+        AUTOPSY_DIR=$(find dist -maxdepth 1 -name "autopsy-*" -type d | head -1)
+        echo "Autopsy dir: $AUTOPSY_DIR"
+        test -n "$AUTOPSY_DIR" && test -d "$AUTOPSY_DIR" || { echo "ERROR: autopsy directory not found in dist/"; exit 1; }
+        mv "$AUTOPSY_DIR" /app/autopsy
+
+      # Run unix_setup.sh to copy TSK JAR and set permissions
+      - |
+        cd /app/autopsy
+        chmod +x unix_setup.sh
+        TSK_JAVA_LIB_PATH=/app/share/java JAVA_HOME=/app/jdk ./unix_setup.sh
+
+      # Install wrapper and desktop integration
+      - install -Dm755 flatpak/autopsywrapper.sh /app/autopsy/bin/autopsywrapper.sh
+      # Symlink into /app/bin so the .desktop Exec line resolves at runtime
+      # (the runtime PATH only includes /app/bin, not /app/autopsy/bin).
+      - ln -sf /app/autopsy/bin/autopsywrapper.sh /app/bin/autopsywrapper.sh
+      - install -Dm644 flatpak/org.sleuthkit.Autopsy.desktop /app/share/applications/org.sleuthkit.Autopsy.desktop
+      - install -Dm644 flatpak/org.sleuthkit.Autopsy.metainfo.xml /app/share/metainfo/org.sleuthkit.Autopsy.metainfo.xml
+      - install -Dm644 snap/gui/autopsy.png /app/share/icons/hicolor/256x256/apps/org.sleuthkit.Autopsy.png

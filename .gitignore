@@ -114,3 +114,8 @@ hs_err_pid*.log
 /Tools/autopsy-mcp-stdio/dist/
 
 .claude
+
+# Flatpak build artifacts
+build-dir/
+.flatpak-builder/
+*.flatpak

@@ -1,5 +1,15 @@
 # Overview
-For Linux systems that [support snapd](https://snapcraft.io/docs/installing-snapd), there is currently the option to install Autopsy from the [snap package](#install-autopsy-snap).  Otherwise, when installing on Debian-based Linux or macOS systems, there are three general steps: [installing prerequisites](#installing-prerequisites), [installing The Sleuth Kit](#installing-the-sleuth-kit), and [installing Autopsy](#installing-autopsy) itself.  On macOS, you will want to [setup the JNA paths](#setup-macos-jna-paths).
+For Linux systems, Autopsy can be installed as a [Flatpak bundle](#install-autopsy-flatpak) or as a [Snap package](#install-autopsy-snap).  Flatpak is the recommended option for distributions that do not support snapd.  Otherwise, when installing on Debian-based Linux or macOS systems, there are three general steps: [installing prerequisites](#installing-prerequisites), [installing The Sleuth Kit](#installing-the-sleuth-kit), and [installing Autopsy](#installing-autopsy) itself.  On macOS, you will want to [setup the JNA paths](#setup-macos-jna-paths).
+
+# Install Autopsy Flatpak
+Autopsy is available as a self-contained [Flatpak](https://flatpak.org/) bundle.  Download the `autopsy.flatpak` file from the [release section](https://github.com/sleuthkit/autopsy/releases) and install it with:
+
+```sh
+flatpak install --user autopsy.flatpak
+flatpak run org.sleuthkit.Autopsy
+```
+
+See the [Flatpak README](./flatpak/README.md) for build instructions, known limitations, and permission notes.
 
 # Install Autopsy Snap
 Autopsy comes in a [Snap package](https://snapcraft.io/about).  See the [Snap README](./snap/README.md) for installation instructions and more information.

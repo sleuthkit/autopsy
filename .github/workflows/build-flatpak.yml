@@ -1,0 +1,79 @@
+name: Build Flatpak Bundle
+
+# Mirrors the Snap distribution model: builds on deliberate tags and on-demand.
+# On a tag push: the .flatpak bundle is attached to the GitHub Release.
+# On workflow_dispatch: the bundle is uploaded as a workflow artifact.
+on:
+  push:
+    tags:
+      - 'autopsy-*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Flatpak bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v5
+
+      # ubuntu-latest only ships ~14 GB free; the NetBeans platform download,
+      # Autopsy compilation, and flatpak overlay together need ≥20 GB.
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Install Flatpak and flatpak-builder
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+
+      - name: Add Flathub remote (provides runtime and SDK)
+        run: |
+          flatpak remote-add --user --if-not-exists \
+            flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+      - name: Install Flatpak runtime and SDK
+        run: |
+          flatpak install --user --noninteractive \
+            org.freedesktop.Platform//25.08 \
+            org.freedesktop.Sdk//25.08 \
+            org.freedesktop.Sdk.Extension.openjdk17//25.08
+
+      - name: Build Flatpak
+        run: |
+          flatpak-builder \
+            --user \
+            --force-clean \
+            --repo=repo \
+            build-dir \
+            org.sleuthkit.Autopsy.yaml
+
+      # --runtime-repo embeds the Flathub repo URL so first-time installs on
+      # clean systems can fetch the required org.freedesktop.Platform runtime.
+      - name: Create single-file bundle
+        run: |
+          flatpak build-bundle repo autopsy.flatpak org.sleuthkit.Autopsy \
+            --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+
+      - name: Upload bundle as release asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: autopsy.flatpak
+
+      - name: Upload bundle as workflow artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v5
+        with:
+          name: autopsy-flatpak
+          path: autopsy.flatpak
+          retention-days: 14

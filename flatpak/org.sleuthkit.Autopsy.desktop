@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Autopsy
+Comment=A graphical interface to The Sleuth Kit and other digital forensics tools.
+GenericName=DFIR Tool
+Exec=autopsywrapper.sh
+Icon=org.sleuthkit.Autopsy
+Type=Application
+Categories=System;Security;
+Keywords=autopsy;sleuth;kit;dfir;forensics;
+StartupNotify=true
