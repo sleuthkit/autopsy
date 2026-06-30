@@ -54,7 +54,7 @@ jobs:
 
       - name: Clone SleuthKit
         run: |
-          git clone --branch develop-4.14 https://github.com/sleuthkit/sleuthkit "${{ github.workspace }}\sleuthkit"
+          git clone --branch develop-4.1x https://github.com/sleuthkit/sleuthkit "${{ github.workspace }}\sleuthkit"
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
