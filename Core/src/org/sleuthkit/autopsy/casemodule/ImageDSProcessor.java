@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import javax.swing.JPanel;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.UUID;
@@ -84,6 +85,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     private String sha256;
     private Host host = null;
     private String password;
+    private List<String> passwords;
 
     static {
         filtersList.add(allFilter);
@@ -213,9 +215,10 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         readConfigSettings();
         this.host = host;
         this.password = Objects.toString(password, this.password);
+        List<String> candidatePasswords = buildCandidatePasswords();
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                    new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, this.password, this.host);
+                    new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, candidatePasswords, this.host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -224,7 +227,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             return;
         }
 
-        doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, this.password, progressMonitor, callback);
+        doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, candidatePasswords, progressMonitor, callback);
     }
     
 
@@ -253,7 +256,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         ingestStream = new DefaultIngestStream();
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                    new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId, null, null);
+                    new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId, (String) null, null);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -262,7 +265,10 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             return;
         }
 
-        doAddImageProcess(deviceId, imagePath, 0, timeZone, ignoreFatOrphanFiles, null, null, null, this.password, progressMonitor, callback);
+        // This overload uses only the settings given by the caller, never
+        // the candidate passwords collected from the configuration panel.
+        doAddImageProcess(deviceId, imagePath, 0, timeZone, ignoreFatOrphanFiles, null, null, null,
+                (password != null) ? Collections.singletonList(password) : null, progressMonitor, callback);
     }
     
     
@@ -316,18 +322,19 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
 
     
     @Override
-    public void runWithIngestStream(String password, Host host, IngestJobSettings settings, 
+    public void runWithIngestStream(String password, Host host, IngestJobSettings settings,
             DataSourceProcessorProgressMonitor progress, DataSourceProcessorCallback callBack) {
 
-        // Read the settings from the wizard 
+        // Read the settings from the wizard
         readConfigSettings();
         this.host = host;
         this.password = Objects.toString(password, this.password);
+        List<String> candidatePasswords = buildCandidatePasswords();
 
         // Set up the data source before creating the ingest stream
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                    new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, this.password, this.host);
+                    new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, candidatePasswords, this.host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -347,7 +354,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             ingestStream = new DefaultIngestStream();
         }
 
-        doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, this.password, progress, callBack);
+        doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, candidatePasswords, progress, callBack);
     }
 
     
@@ -377,6 +384,32 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         if (this.password.isEmpty()) {
             password = null;
         }
+        this.passwords = configPanel.getPasswords();
+        if (this.passwords.isEmpty()) {
+            this.passwords = null;
+        }
+    }
+
+    /**
+     * Combines the single password (possibly supplied by a caller) with the
+     * candidate passwords collected from the configuration panel. Each
+     * candidate will be tried when opening encrypted volumes in the image.
+     *
+     * @return The combined candidate password list, or null if there are none.
+     */
+    private List<String> buildCandidatePasswords() {
+        List<String> candidates = new ArrayList<>();
+        if (password != null) {
+            candidates.add(password);
+        }
+        if (passwords != null) {
+            for (String candidate : passwords) {
+                if (!candidates.contains(candidate)) {
+                    candidates.add(candidate);
+                }
+            }
+        }
+        return candidates.isEmpty() ? null : candidates;
     }
 
     /**
@@ -415,12 +448,13 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      * @param md5                  The MD5 hash of the image, may be null.
      * @param sha1                 The SHA-1 hash of the image, may be null.
      * @param sha256               The SHA-256 hash of the image, may be null.
-     * @param password             Password for image decryption.  May be null.
+     * @param passwords            Candidate passwords for image decryption.
+     *                             May be null or empty.
      * @param progressMonitor      Progress monitor for reporting progress
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    private void doAddImageProcess(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, String password, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    private void doAddImageProcess(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, List<String> passwords, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
 
         // If the data source or ingest stream haven't been initialized, stop processing
         if (ingestStream == null) {
@@ -440,7 +474,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             return;
         }
 
-        AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, password);
+        AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, passwords);
         addImageTask = new AddImageTask(imageDetails,
                 progressMonitor,
                 new StreamingAddDataSourceCallbacks(ingestStream),
@@ -477,6 +511,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         ignoreFatOrphanFiles = false;
         host = null;
         password = null;
+        passwords = null;
         configPanel.reset();
     }
 
@@ -561,7 +596,8 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             return;
         }
 
-        doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, this.password, progressMonitor, callBack);
+        doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null,
+                (this.password != null) ? Collections.singletonList(this.password) : null, progressMonitor, callBack);
     }
     
 
@@ -610,7 +646,8 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             return null;
         }
 
-        doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, password, progressMonitor, callBack);
+        doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null,
+                (password != null) ? Collections.singletonList(password) : null, progressMonitor, callBack);
 
         return ingestStream;
     }

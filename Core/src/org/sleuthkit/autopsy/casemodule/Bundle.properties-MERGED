@@ -166,8 +166,16 @@ ImageFilePanel.validatePanel.dataSourceOnCDriveError=Warning: Path to multi-user
 ImageFilePanel.validatePanel.invalidMD5=Invalid MD5 hash
 ImageFilePanel.validatePanel.invalidSHA1=Invalid SHA1 hash
 ImageFilePanel.validatePanel.invalidSHA256=Invalid SHA256 hash
+# {0} - recoveryKeyId
+ImageFilePanel_bitlockerVolume_labelIdOnly=BitLocker volume (Recovery key ID: {0}):
+# {0} - volumeOffset
+ImageFilePanel_bitlockerVolume_labelNoId=BitLocker volume at offset {0} (user password):
+ImageFilePanel_bitlockerVolume_labelPlain=BitLocker volume password:
+# {0} - volumeOffset
+# {1} - recoveryKeyId
+ImageFilePanel_bitlockerVolume_labelWithId=BitLocker volume at offset {0} (Recovery key ID: {1}):
 # {0} - imageOpenError
-ImageFilePanel_validatePanel_imageOpenError=<html><body><p>An error occurred while opening the image:{0}</p></body></html>
+ImageFilePanel_validatePanel_imageOpenError=<html><body style="width:450px"><p>An error occurred while opening the image:{0}</p></body></html>
 ImageFilePanel_validatePanel_unknownError=<html><body><p>An unknown error occurred while attempting to validate the image</p></body></html>
 ImageFilePanel_validatePanel_unknownErrorMsg=<unknown>
 IngestJobInfoPanel.IngestJobTableModel.EndTime.header=End Time

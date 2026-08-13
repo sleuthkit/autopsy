@@ -107,7 +107,11 @@ class AddImageTask implements Runnable {
         try {
             synchronized (tskAddImageProcessLock) {
                 if (!tskAddImageProcessStopped) {
-                    tskAddImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(imageDetails.timeZone, true, imageDetails.ignoreFatOrphanFiles, imageWriterPath, imageDetails.password);
+                    if (imageDetails.passwords != null && !imageDetails.passwords.isEmpty()) {
+                        tskAddImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(imageDetails.timeZone, true, imageDetails.ignoreFatOrphanFiles, imageWriterPath, imageDetails.passwords);
+                    } else {
+                        tskAddImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(imageDetails.timeZone, true, imageDetails.ignoreFatOrphanFiles, imageWriterPath, imageDetails.password);
+                    }
                 } else {
                     return;
                 }
@@ -316,24 +320,34 @@ class AddImageTask implements Runnable {
         String timeZone;
         boolean ignoreFatOrphanFiles;
         String md5;
-        String sha1; 
+        String sha1;
         String sha256;
         ImageWriterSettings imageWriterSettings;
         String password;
-        
+        List<String> passwords;
+
         ImageDetails(String deviceId, Image image, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, ImageWriterSettings imageWriterSettings, String password) {
+            this(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, imageWriterSettings, (List<String>) null);
+            // Store the single password directly (not as a one-element
+            // candidate list) so existing single-password callers keep going
+            // through the legacy makeAddImageProcess(String) path.
+            this.password = password;
+        }
+
+        ImageDetails(String deviceId, Image image, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, ImageWriterSettings imageWriterSettings, List<String> passwords) {
             this.deviceId = deviceId;
             this.image = image;
             this.sectorSize = sectorSize;
             this.timeZone = timeZone;
             this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
             this.md5 = md5;
-            this.sha1 = sha1; 
-            this.sha256 = sha256; 
+            this.sha1 = sha1;
+            this.sha256 = sha256;
             this.imageWriterSettings = imageWriterSettings;
-            this.password = password;
+            this.password = (passwords != null && !passwords.isEmpty()) ? passwords.get(0) : null;
+            this.passwords = passwords;
         }
-	
+
         String getImagePath() {
             if (image.getPaths().length > 0) {
                 return image.getPaths()[0];
