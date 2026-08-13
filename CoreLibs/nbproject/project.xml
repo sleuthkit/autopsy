@@ -1049,8 +1049,8 @@
                 <binary-origin>release/modules/ext/jfxtras-fxml-17-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jna-5.18.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jna-5.18.1.jar</binary-origin>
+                <runtime-relative-path>ext/jna-5.19.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jna-5.19.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jna-platform-5.18.1.jar</runtime-relative-path>
