@@ -834,6 +834,9 @@ public class ImageFilePanel extends JPanel {
                     bitlockerVolumesPanel.setVisible(!bitlockerVolumeRows.isEmpty());
                     bitlockerVolumesPanel.revalidate();
                     bitlockerVolumesPanel.repaint();
+                    // The per-volume rows replace the single password field
+                    // for this image; showing both is redundant.
+                    setMainPasswordFieldVisible(bitlockerVolumeRows.isEmpty());
                 }
             }
         });
@@ -849,6 +852,20 @@ public class ImageFilePanel extends JPanel {
         bitlockerVolumesPanel.setVisible(false);
         bitlockerVolumesPanel.revalidate();
         bitlockerVolumesPanel.repaint();
+        setMainPasswordFieldVisible(true);
+    }
+
+    /**
+     * Shows or hides the single "Bitlocker Password" field. Its value is not
+     * cleared while hidden, so it keeps counting as a candidate password.
+     *
+     * @param visible True to show the field, false to hide it.
+     */
+    private void setMainPasswordFieldVisible(boolean visible) {
+        passwordLabel.setVisible(visible);
+        passwordTextField.setVisible(visible);
+        revalidate();
+        repaint();
     }
 
     public void reset() {
@@ -916,7 +933,9 @@ public class ImageFilePanel extends JPanel {
         "# {0} - imageOpenError",
         "ImageFilePanel_validatePanel_imageOpenError=<html><body style=\"width:450px\"><p>An error occurred while opening the image:{0}</p></body></html>",
         "ImageFilePanel_validatePanel_unknownErrorMsg=<unknown>",
-        "ImageFilePanel_validatePanel_unknownError=<html><body><p>An unknown error occurred while attempting to validate the image</p></body></html>"
+        "ImageFilePanel_validatePanel_unknownError=<html><body><p>An unknown error occurred while attempting to validate the image</p></body></html>",
+        "ImageFilePanel_validatePanel_bitlockerLocked=<html><body><p>One or more BitLocker volumes require a password to open this "
+        + "image. Enter a password or recovery key for each locked volume below.</p></body></html>"
     })
     public boolean validatePanel() {
         return runWithLock(this.validationLock, () -> {
@@ -964,13 +983,21 @@ public class ImageFilePanel extends JPanel {
                     if (!testResult.wasSuccessful()) {
                         // Show a password field for each locked BitLocker volume
                         // reported in the message.
-                        updateBitlockerVolumeRows(path, parseBitlockerVolumes(testResult.getMessage()));
-                        String message = StringUtils.defaultIfBlank(
-                                testResult.getMessage(),
-                                Bundle.ImageFilePanel_validatePanel_unknownErrorMsg());
-                        // The error label renders HTML, so multiple locked
-                        // volumes need <br> tags to show as separate lines.
-                        showError(Bundle.ImageFilePanel_validatePanel_imageOpenError(message.replace("\n", "<br>")));
+                        List<BitlockerVolumeInfo> volumes = parseBitlockerVolumes(testResult.getMessage());
+                        updateBitlockerVolumeRows(path, volumes);
+                        if (volumes.isEmpty()) {
+                            // Not a BitLocker failure; show the detailed message.
+                            String message = StringUtils.defaultIfBlank(
+                                    testResult.getMessage(),
+                                    Bundle.ImageFilePanel_validatePanel_unknownErrorMsg());
+                            // The error label renders HTML, so multiple locked
+                            // volumes need <br> tags to show as separate lines.
+                            showError(Bundle.ImageFilePanel_validatePanel_imageOpenError(message.replace("\n", "<br>")));
+                        } else {
+                            // The per-volume rows below already show each
+                            // volume's identifier, so a short prompt is enough.
+                            showError(Bundle.ImageFilePanel_validatePanel_bitlockerLocked());
+                        }
                         return false;
                     }
                     updateBitlockerVolumeRows(path, new ArrayList<>());
