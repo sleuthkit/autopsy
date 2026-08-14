@@ -850,6 +850,18 @@ public class ImageFilePanel extends JPanel {
                     bitlockerVolumeRows.put(volumeKey, new BitlockerVolumeRow(volumeLabel, volumeField, statusLabel));
                 }
 
+                // A locked volume whose line had neither a recovery key GUID
+                // nor an offset could not be matched to (or create) a row
+                // above; when that happens, any of the existing rows could be
+                // the one still locked, so no row may claim to be unlocked.
+                boolean hasUnmatchedLockedVolume = false;
+                for (String lockedKey : lockedByKey.keySet()) {
+                    if (!bitlockerVolumeRows.containsKey(lockedKey)) {
+                        hasUnmatchedLockedVolume = true;
+                        break;
+                    }
+                }
+
                 // Refresh every row's status, including rows not present in
                 // `volumes` this time (they are now unlocked) and rows whose
                 // description changed (e.g. "Password required" to
@@ -863,10 +875,13 @@ public class ImageFilePanel extends JPanel {
                         volumeRow.statusLabel.setText(StringUtils.defaultIfBlank(
                                 lockedInfo.description, Bundle.ImageFilePanel_bitlockerVolume_statusLocked()));
                         volumeRow.statusLabel.setForeground(BITLOCKER_STATUS_LOCKED_COLOR);
-                    } else {
+                    } else if (!hasUnmatchedLockedVolume) {
                         volumeRow.statusLabel.setText(Bundle.ImageFilePanel_bitlockerVolume_statusUnlocked());
                         volumeRow.statusLabel.setForeground(BITLOCKER_STATUS_UNLOCKED_COLOR);
                     }
+                    // else: an unidentifiable volume is still locked and this
+                    // row might be its; keep the row's previous status rather
+                    // than show a possibly false "Unlocked".
                 }
 
                 bitlockerVolumesPanel.setVisible(!bitlockerVolumeRows.isEmpty());
