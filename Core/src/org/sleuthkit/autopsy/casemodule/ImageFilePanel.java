@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,13 @@ public class ImageFilePanel extends JPanel {
     private static final String BITLOCKER_LINE_MARKER = "BitLocker status - "; //NON-NLS
     private static final Pattern BITLOCKER_GUID_PATTERN = Pattern.compile("Recovery key identifier: ([^)]*)\\)"); //NON-NLS
     private static final Pattern BITLOCKER_OFFSET_PATTERN = Pattern.compile("\\(Volume offset: (\\d+)\\)"); //NON-NLS
+    // Matches the whole optional "(Recovery key identifier: ...)" annotation
+    // (including its parentheses) so it can be stripped when isolating a
+    // line's plain-text description; BITLOCKER_GUID_PATTERN above only
+    // captures the identifier itself, not the surrounding parentheses.
+    private static final Pattern BITLOCKER_GUID_ANNOTATION_PATTERN = Pattern.compile("\\(Recovery key identifier: [^)]*\\)"); //NON-NLS
+    private static final java.awt.Color BITLOCKER_STATUS_LOCKED_COLOR = new java.awt.Color(255, 0, 0);
+    private static final java.awt.Color BITLOCKER_STATUS_UNLOCKED_COLOR = new java.awt.Color(0, 128, 0);
 
     /**
      * One password field per locked BitLocker volume, keyed by volume offset
@@ -155,10 +163,9 @@ public class ImageFilePanel extends JPanel {
         // post-constructor initialization of listener support without leaking references of uninitialized objects
         for (JTextField textField: List.of(
                 instance.getPathTextField(),
-                instance.getMd5TextFieldField(), 
-                instance.getSha1TextField(), 
-                instance.getSha256TextField(), 
-                instance.getPasswordTextField())) {
+                instance.getMd5TextFieldField(),
+                instance.getSha1TextField(),
+                instance.getSha256TextField())) {
             textField.getDocument().addDocumentListener(delayedValidationListener);
         }
         return instance;
@@ -178,10 +185,6 @@ public class ImageFilePanel extends JPanel {
 
     private JTextField getSha256TextField() {
         return sha256HashTextField;
-    }
-    
-    private JTextField getPasswordTextField() {
-        return passwordTextField;
     }
     
     private JFileChooser getChooser() {
@@ -225,8 +228,6 @@ public class ImageFilePanel extends JPanel {
         md5HashLabel = new javax.swing.JLabel();
         hashValuesLabel = new javax.swing.JLabel();
         hashValuesNoteLabel = new javax.swing.JLabel();
-        passwordLabel = new javax.swing.JLabel();
-        passwordTextField = new javax.swing.JTextField();
         bitlockerVolumesPanel = new javax.swing.JPanel();
         javax.swing.JPanel spacer = new javax.swing.JPanel();
         loadingLabel = new javax.swing.JLabel();
@@ -420,25 +421,6 @@ public class ImageFilePanel extends JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
         add(hashValuesNoteLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(passwordLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.passwordLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
-        add(passwordLabel, gridBagConstraints);
-
-        passwordTextField.setText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.passwordTextField.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 5;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
-        add(passwordTextField, gridBagConstraints);
-
         bitlockerVolumesPanel.setLayout(new java.awt.GridBagLayout());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -539,8 +521,6 @@ public class ImageFilePanel extends JPanel {
     private javax.swing.JLabel md5HashLabel;
     private javax.swing.JTextField md5HashTextField;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
-    private javax.swing.JLabel passwordLabel;
-    private javax.swing.JTextField passwordTextField;
     private javax.swing.JLabel pathLabel;
     private javax.swing.JTextField pathTextField;
     private javax.swing.JComboBox<String> sectorSizeComboBox;
@@ -626,25 +606,15 @@ public class ImageFilePanel extends JPanel {
         return this.sha256HashTextField.getText();
     }
     
-    String getPassword() {
-        return this.passwordTextField.getText();
-    }
-
     /**
-     * Gets all candidate passwords entered by the user: the main password
-     * field plus any per-volume BitLocker password fields. Each will be tried
-     * when opening the encrypted volumes in the image.
+     * Gets all candidate passwords entered by the user via the per-volume
+     * BitLocker password fields. Each will be tried when opening the
+     * encrypted volumes in the image.
      *
      * @return De-duplicated list of non-empty candidate passwords.
      */
     List<String> getPasswords() {
         List<String> passwords = new ArrayList<>();
-        // This runs off the EDT; a concurrent edit can make getText() return
-        // null, so default to "".
-        String mainPassword = StringUtils.defaultString(getPassword());
-        if (!mainPassword.isEmpty()) {
-            passwords.add(mainPassword);
-        }
         synchronized (bitlockerVolumeRows) {
             // Row passwords belong to the image they were shown for; skip
             // them if the selected path has changed since (the rows
@@ -669,10 +639,12 @@ public class ImageFilePanel extends JPanel {
 
         private final String volumeOffset;   // null if not in the message
         private final String recoveryKeyId;  // null if not in the message
+        private final String description;    // null if not parsed from the message
 
-        BitlockerVolumeInfo(String volumeOffset, String recoveryKeyId) {
+        BitlockerVolumeInfo(String volumeOffset, String recoveryKeyId, String description) {
             this.volumeOffset = volumeOffset;
             this.recoveryKeyId = recoveryKeyId;
+            this.description = description;
         }
 
         String getKey() {
@@ -695,12 +667,14 @@ public class ImageFilePanel extends JPanel {
      */
     private static class BitlockerVolumeRow {
 
-        private final JLabel label;
+        private final JLabel titleLabel;
         private final JTextField passwordField;
+        private final JLabel statusLabel;
 
-        BitlockerVolumeRow(JLabel label, JTextField passwordField) {
-            this.label = label;
+        BitlockerVolumeRow(JLabel titleLabel, JTextField passwordField, JLabel statusLabel) {
+            this.titleLabel = titleLabel;
             this.passwordField = passwordField;
+            this.statusLabel = statusLabel;
         }
     }
 
@@ -728,37 +702,72 @@ public class ImageFilePanel extends JPanel {
             String recoveryKeyId = guidMatcher.find() ? StringUtils.trimToNull(guidMatcher.group(1)) : null;
             Matcher offsetMatcher = BITLOCKER_OFFSET_PATTERN.matcher(line);
             String volumeOffset = offsetMatcher.find() ? offsetMatcher.group(1) : null;
-            volumes.add(new BitlockerVolumeInfo(volumeOffset, recoveryKeyId));
+            // The identifier/offset annotations are optional (e.g. a
+            // password-only-protected volume has neither), so the
+            // description is derived by stripping them rather than
+            // anchoring on either being present.
+            String description = StringUtils.trimToNull(
+                    line.substring(line.indexOf(BITLOCKER_LINE_MARKER) + BITLOCKER_LINE_MARKER.length())
+                            .replaceAll(BITLOCKER_GUID_ANNOTATION_PATTERN.pattern(), "")
+                            .replaceAll(BITLOCKER_OFFSET_PATTERN.pattern(), ""));
+            volumes.add(new BitlockerVolumeInfo(volumeOffset, recoveryKeyId, description));
         }
         return volumes;
     }
 
     @NbBundle.Messages({
-        "# {0} - volumeOffset",
-        "# {1} - recoveryKeyId",
-        "ImageFilePanel_bitlockerVolume_labelWithId=BitLocker volume at offset {0} (Recovery key ID: {1}):",
+        "# {0} - recoveryKeyId",
+        "ImageFilePanel_bitlockerVolume_labelWithId=BitLocker volume — Recovery key ID: {0}:",
         "# {0} - volumeOffset",
         "ImageFilePanel_bitlockerVolume_labelNoId=BitLocker volume at offset {0} (user password):",
-        "# {0} - recoveryKeyId",
-        "ImageFilePanel_bitlockerVolume_labelIdOnly=BitLocker volume (Recovery key ID: {0}):",
-        "ImageFilePanel_bitlockerVolume_labelPlain=BitLocker volume password:"
+        "ImageFilePanel_bitlockerVolume_labelPlain=BitLocker volume password:",
+        "ImageFilePanel_bitlockerVolume_statusLocked=Password required",
+        "ImageFilePanel_bitlockerVolume_statusUnlocked=✓ Unlocked"
     })
     private static String getBitlockerVolumeLabel(BitlockerVolumeInfo volumeInfo) {
-        if (volumeInfo.volumeOffset != null && volumeInfo.recoveryKeyId != null) {
-            return Bundle.ImageFilePanel_bitlockerVolume_labelWithId(volumeInfo.volumeOffset, volumeInfo.recoveryKeyId);
+        // The recovery key ID is what BitLocker users record/reference; the
+        // volume offset is only shown as a fallback when there is no ID to
+        // tell two locked volumes apart (e.g. a user-password-only volume).
+        if (volumeInfo.recoveryKeyId != null) {
+            return Bundle.ImageFilePanel_bitlockerVolume_labelWithId(volumeInfo.recoveryKeyId);
         } else if (volumeInfo.volumeOffset != null) {
             return Bundle.ImageFilePanel_bitlockerVolume_labelNoId(volumeInfo.volumeOffset);
-        } else if (volumeInfo.recoveryKeyId != null) {
-            return Bundle.ImageFilePanel_bitlockerVolume_labelIdOnly(volumeInfo.recoveryKeyId);
         }
         return Bundle.ImageFilePanel_bitlockerVolume_labelPlain();
     }
 
     /**
-     * Shows a labeled password field for each locked BitLocker volume. Fields
-     * for volumes that are already shown keep their contents; a volume that
-     * unlocks is no longer reported in the message but its field (and
-     * password) is kept so it remains part of the candidate list.
+     * Clears the per-volume BitLocker rows if the given path is no longer the
+     * currently selected image path. Unlike {@link #updateBitlockerVolumeRows},
+     * this never creates rows or updates their lock status — it is meant to
+     * be called defensively before a real test-open-image result is known
+     * (e.g. at the top of {@code validatePanel()}), so it cannot flash a
+     * false "unlocked" status on an in-progress validation.
+     *
+     * @param imagePath The currently selected image path.
+     */
+    private void clearStaleBitlockerVolumeRows(String imagePath) {
+        SwingUtilities.invokeLater(() -> {
+            if (!Objects.equals(imagePath, getContentPaths())) {
+                return;
+            }
+            synchronized (bitlockerVolumeRows) {
+                if (!Objects.equals(imagePath, bitlockerVolumesImagePath)) {
+                    clearBitlockerVolumeRows();
+                    bitlockerVolumesImagePath = imagePath;
+                }
+            }
+        });
+    }
+
+    /**
+     * Shows a labeled password field for each locked BitLocker volume, and
+     * refreshes every row's live status. Fields for volumes that are already
+     * shown keep their contents; a volume that unlocks is no longer reported
+     * in the message but its field (and password) is kept so it remains part
+     * of the candidate list — its row instead switches to an "Unlocked"
+     * status. Call only with a real (possibly empty, on success) list of
+     * currently locked volumes from a completed test-open-image result.
      *
      * @param imagePath The image the volumes belong to; switching images
      *                  clears all fields.
@@ -777,9 +786,10 @@ public class ImageFilePanel extends JPanel {
                     clearBitlockerVolumeRows();
                     bitlockerVolumesImagePath = imagePath;
                 }
-                boolean changed = false;
+                Map<String, BitlockerVolumeInfo> lockedByKey = new HashMap<>();
                 for (BitlockerVolumeInfo volumeInfo : volumes) {
                     String volumeKey = volumeInfo.getKey();
+                    lockedByKey.put(volumeKey, volumeInfo);
                     if (bitlockerVolumeRows.containsKey(volumeKey)) {
                         continue;
                     }
@@ -798,18 +808,19 @@ public class ImageFilePanel extends JPanel {
                         // report arrives, instead of gaining a second row.
                         BitlockerVolumeRow orphanRow = bitlockerVolumeRows.remove("");
                         if (orphanRow != null) {
-                            orphanRow.label.setText(getBitlockerVolumeLabel(volumeInfo));
+                            orphanRow.titleLabel.setText(getBitlockerVolumeLabel(volumeInfo));
                             bitlockerVolumeRows.put(volumeKey, orphanRow);
-                            changed = true;
                             continue;
                         }
                     }
 
                     int row = bitlockerVolumeRows.size();
+                    int gridY = row * 2;
+
                     JLabel volumeLabel = new JLabel(getBitlockerVolumeLabel(volumeInfo));
                     java.awt.GridBagConstraints labelConstraints = new java.awt.GridBagConstraints();
                     labelConstraints.gridx = 0;
-                    labelConstraints.gridy = row;
+                    labelConstraints.gridy = gridY;
                     labelConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
                     labelConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
                     bitlockerVolumesPanel.add(volumeLabel, labelConstraints);
@@ -820,24 +831,49 @@ public class ImageFilePanel extends JPanel {
                     }
                     java.awt.GridBagConstraints fieldConstraints = new java.awt.GridBagConstraints();
                     fieldConstraints.gridx = 1;
-                    fieldConstraints.gridy = row;
+                    fieldConstraints.gridy = gridY;
                     fieldConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
                     fieldConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
                     fieldConstraints.weightx = 1.0;
                     fieldConstraints.insets = new java.awt.Insets(0, 0, 5, 0);
                     bitlockerVolumesPanel.add(volumeField, fieldConstraints);
 
-                    bitlockerVolumeRows.put(volumeKey, new BitlockerVolumeRow(volumeLabel, volumeField));
-                    changed = true;
+                    JLabel statusLabel = new JLabel(" ");
+                    java.awt.GridBagConstraints statusConstraints = new java.awt.GridBagConstraints();
+                    statusConstraints.gridx = 0;
+                    statusConstraints.gridy = gridY + 1;
+                    statusConstraints.gridwidth = 2;
+                    statusConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+                    statusConstraints.insets = new java.awt.Insets(0, 20, 8, 0);
+                    bitlockerVolumesPanel.add(statusLabel, statusConstraints);
+
+                    bitlockerVolumeRows.put(volumeKey, new BitlockerVolumeRow(volumeLabel, volumeField, statusLabel));
                 }
-                if (changed) {
-                    bitlockerVolumesPanel.setVisible(!bitlockerVolumeRows.isEmpty());
-                    bitlockerVolumesPanel.revalidate();
-                    bitlockerVolumesPanel.repaint();
-                    // The per-volume rows replace the single password field
-                    // for this image; showing both is redundant.
-                    setMainPasswordFieldVisible(bitlockerVolumeRows.isEmpty());
+
+                // Refresh every row's status, including rows not present in
+                // `volumes` this time (they are now unlocked) and rows whose
+                // description changed (e.g. "Password required" to
+                // "Incorrect password entered"). Runs every call, not just
+                // when a row was added, since the same set of locked volumes
+                // can be re-validated with a different failure reason.
+                for (Map.Entry<String, BitlockerVolumeRow> entry : bitlockerVolumeRows.entrySet()) {
+                    BitlockerVolumeInfo lockedInfo = lockedByKey.get(entry.getKey());
+                    BitlockerVolumeRow volumeRow = entry.getValue();
+                    if (lockedInfo != null) {
+                        volumeRow.statusLabel.setText(StringUtils.defaultIfBlank(
+                                lockedInfo.description, Bundle.ImageFilePanel_bitlockerVolume_statusLocked()));
+                        volumeRow.statusLabel.setForeground(BITLOCKER_STATUS_LOCKED_COLOR);
+                    } else {
+                        volumeRow.statusLabel.setText(Bundle.ImageFilePanel_bitlockerVolume_statusUnlocked());
+                        volumeRow.statusLabel.setForeground(BITLOCKER_STATUS_UNLOCKED_COLOR);
+                    }
                 }
+
+                bitlockerVolumesPanel.setVisible(!bitlockerVolumeRows.isEmpty());
+                bitlockerVolumesPanel.revalidate();
+                bitlockerVolumesPanel.repaint();
+                this.revalidate();
+                this.repaint();
             }
         });
     }
@@ -852,20 +888,8 @@ public class ImageFilePanel extends JPanel {
         bitlockerVolumesPanel.setVisible(false);
         bitlockerVolumesPanel.revalidate();
         bitlockerVolumesPanel.repaint();
-        setMainPasswordFieldVisible(true);
-    }
-
-    /**
-     * Shows or hides the single "Bitlocker Password" field. Its value is not
-     * cleared while hidden, so it keeps counting as a candidate password.
-     *
-     * @param visible True to show the field, false to hide it.
-     */
-    private void setMainPasswordFieldVisible(boolean visible) {
-        passwordLabel.setVisible(visible);
-        passwordTextField.setVisible(visible);
-        revalidate();
-        repaint();
+        this.revalidate();
+        this.repaint();
     }
 
     public void reset() {
@@ -874,7 +898,6 @@ public class ImageFilePanel extends JPanel {
         this.md5HashTextField.setText(null);
         this.sha1HashTextField.setText(null);
         this.sha256HashTextField.setText(null);
-        this.passwordTextField.setText(null);
         SwingUtilities.invokeLater(() -> {
             synchronized (bitlockerVolumeRows) {
                 clearBitlockerVolumeRows();
@@ -892,7 +915,6 @@ public class ImageFilePanel extends JPanel {
         SwingUtilities.invokeLater(() -> {
             this.browseButton.setEnabled(enabled);
             this.noFatOrphansCheckbox.setEnabled(enabled);
-            setTextFieldEnabled(this.passwordTextField, enabled);
             setTextFieldEnabled(this.pathTextField, enabled);
             this.sectorSizeComboBox.setEnabled(enabled);
             setTextFieldEnabled(this.md5HashTextField, enabled && validNonE01);
@@ -955,8 +977,10 @@ public class ImageFilePanel extends JPanel {
 
                 // A path change clears the rows of the previous image even
                 // when validation exits early below; for an unchanged path
-                // this is a no-op that keeps the rows.
-                updateBitlockerVolumeRows(path, new ArrayList<>());
+                // this is a no-op that keeps the rows. Uses the lightweight
+                // clear-only path so it can't flash a false "unlocked"
+                // status before the real test-open-image result is in.
+                clearStaleBitlockerVolumeRows(path);
 
                 if (!isImagePathValid(path)) {
                     showError(null);

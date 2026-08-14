@@ -170,14 +170,13 @@ ImageFilePanel.validatePanel.dataSourceOnCDriveError=Warning: Path to multi-user
 ImageFilePanel.validatePanel.invalidMD5=Invalid MD5 hash
 ImageFilePanel.validatePanel.invalidSHA1=Invalid SHA1 hash
 ImageFilePanel.validatePanel.invalidSHA256=Invalid SHA256 hash
-# {0} - recoveryKeyId
-ImageFilePanel_bitlockerVolume_labelIdOnly=BitLocker volume (Recovery key ID: {0}):
 # {0} - volumeOffset
 ImageFilePanel_bitlockerVolume_labelNoId=BitLocker volume at offset {0} (user password):
 ImageFilePanel_bitlockerVolume_labelPlain=BitLocker volume password:
-# {0} - volumeOffset
-# {1} - recoveryKeyId
-ImageFilePanel_bitlockerVolume_labelWithId=BitLocker volume at offset {0} (Recovery key ID: {1}):
+# {0} - recoveryKeyId
+ImageFilePanel_bitlockerVolume_labelWithId=BitLocker volume \u2014 Recovery key ID: {0}:
+ImageFilePanel_bitlockerVolume_statusLocked=Password required
+ImageFilePanel_bitlockerVolume_statusUnlocked=\u2713 Unlocked
 ImageFilePanel_validatePanel_bitlockerLocked=<html><body><p>One or more BitLocker volumes require a password to open this image. Enter a password or recovery key for each locked volume below.</p></body></html>
 # {0} - imageOpenError
 ImageFilePanel_validatePanel_imageOpenError=<html><body style="width:450px"><p>An error occurred while opening the image:{0}</p></body></html>
@@ -527,7 +526,5 @@ LocalFilesPanel.jLabel2.text=NOTE: Time stamps may have changed when the files w
 LocalFilesPanel.timestampToIncludeLabel.text=Timestamps To Include:
 LocalFilesPanel.accessTimeCheckBox.text=Access Time - Can be changed when the file is opened
 LocalFilesPanel.timeStampToIncludeLabel.text=Timestamps To Include:
-LocalFilesPanel.timeStampNoteLabel.text=NOTE: Time stamps may have changed when the files were copied to the current location. 
-ImageFilePanel.passwordLabel.text=Bitlocker Password (optional):
-ImageFilePanel.passwordTextField.text=
+LocalFilesPanel.timeStampNoteLabel.text=NOTE: Time stamps may have changed when the files were copied to the current location.
 ImageFilePanel.loadingLabel.text=loading...

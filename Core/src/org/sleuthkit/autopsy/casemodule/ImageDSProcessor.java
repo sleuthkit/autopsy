@@ -380,10 +380,9 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         if (sha256.isEmpty()) {
             sha256 = null;
         }
-        this.password = configPanel.getPassword();
-        if (this.password.isEmpty()) {
-            password = null;
-        }
+        // The panel no longer offers a single/main password field, only the
+        // per-volume BitLocker fields harvested into `passwords` below.
+        this.password = null;
         this.passwords = configPanel.getPasswords();
         if (this.passwords.isEmpty()) {
             this.passwords = null;
