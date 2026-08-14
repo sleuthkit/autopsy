@@ -6,6 +6,9 @@ AddImageWizardSelectHostVisual_title=Select Host
 # {0} - exception message
 Case.closeException.couldNotCloseCase=Error closing case: {0}
 # {0} - provider name
+Case.contentProviderLoadFailed.message=The content provider plugin (''{0}'') is installed but could not be loaded. Check the module for errors.
+Case.contentProviderLoadFailed.title=Content Provider Load Failed
+# {0} - provider name
 Case.contentProviderNotFound.message=This case requires a content provider plugin (''{0}'') that is not installed. Please install the appropriate plugin.
 Case.contentProviderNotFound.title=Content Provider Not Found
 Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources
@@ -20,6 +23,7 @@ Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is
 Case.exceptionMessage.cannotLocateMainWindow=Cannot locate main application window
 Case.exceptionMessage.cannotOpenMultiUserCaseNoSettings=Multi-user settings are missing (see Tools, Options, Multi-user tab), cannot open a multi-user case.
 Case.exceptionMessage.contentProviderCouldNotBeFound=Content provider was specified for the case but could not be loaded.
+Case.exceptionMessage.contentProviderLoadFailed=The content provider plugin is installed but failed to load.
 Case.exceptionMessage.contentProviderVersionMismatch=The installed content provider plugin is not compatible with this case.
 # {0} - exception message
 Case.exceptionMessage.couldNotCreatCollaborationMonitor=Failed to create collaboration monitor:\n{0}.
@@ -166,8 +170,16 @@ ImageFilePanel.validatePanel.dataSourceOnCDriveError=Warning: Path to multi-user
 ImageFilePanel.validatePanel.invalidMD5=Invalid MD5 hash
 ImageFilePanel.validatePanel.invalidSHA1=Invalid SHA1 hash
 ImageFilePanel.validatePanel.invalidSHA256=Invalid SHA256 hash
+# {0} - volumeOffset
+ImageFilePanel_bitlockerVolume_labelNoId=BitLocker volume at offset {0} (user password):
+ImageFilePanel_bitlockerVolume_labelPlain=BitLocker volume password:
+# {0} - recoveryKeyId
+ImageFilePanel_bitlockerVolume_labelWithId=BitLocker volume \u2014 Recovery key ID: {0}:
+ImageFilePanel_bitlockerVolume_statusLocked=Password required
+ImageFilePanel_bitlockerVolume_statusUnlocked=\u2713 Unlocked
+ImageFilePanel_validatePanel_bitlockerLocked=<html><body><p>One or more BitLocker volumes require a password to open this image. Enter a password or recovery key for each locked volume below.</p></body></html>
 # {0} - imageOpenError
-ImageFilePanel_validatePanel_imageOpenError=<html><body><p>An error occurred while opening the image:{0}</p></body></html>
+ImageFilePanel_validatePanel_imageOpenError=<html><body style="width:450px"><p>An error occurred while opening the image:{0}</p></body></html>
 ImageFilePanel_validatePanel_unknownError=<html><body><p>An unknown error occurred while attempting to validate the image</p></body></html>
 ImageFilePanel_validatePanel_unknownErrorMsg=<unknown>
 IngestJobInfoPanel.IngestJobTableModel.EndTime.header=End Time
@@ -514,7 +526,5 @@ LocalFilesPanel.jLabel2.text=NOTE: Time stamps may have changed when the files w
 LocalFilesPanel.timestampToIncludeLabel.text=Timestamps To Include:
 LocalFilesPanel.accessTimeCheckBox.text=Access Time - Can be changed when the file is opened
 LocalFilesPanel.timeStampToIncludeLabel.text=Timestamps To Include:
-LocalFilesPanel.timeStampNoteLabel.text=NOTE: Time stamps may have changed when the files were copied to the current location. 
-ImageFilePanel.passwordLabel.text=Bitlocker Password (optional):
-ImageFilePanel.passwordTextField.text=
+LocalFilesPanel.timeStampNoteLabel.text=NOTE: Time stamps may have changed when the files were copied to the current location.
 ImageFilePanel.loadingLabel.text=loading...
