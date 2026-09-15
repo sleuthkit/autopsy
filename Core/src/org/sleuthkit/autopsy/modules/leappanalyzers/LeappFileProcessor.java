@@ -580,7 +580,6 @@ public final class LeappFileProcessor {
         String alternateId = null;
         CommunicationDirection communicationDirection = CommunicationDirection.UNKNOWN;
         String senderId = null;
-        String receipentId = null;
         String[] receipentIdList = null;
         Long dateTime = Long.valueOf(0);
         MessageReadStatus messageStatus = MessageReadStatus.UNKNOWN;
@@ -661,8 +660,10 @@ public final class LeappFileProcessor {
                 accountHelper = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                         moduleName, absFile, accountType, accountType, alternateId, context.getJobId());
             }
+            List<String> recipientIds = receipentIdList == null ? new ArrayList<>()
+                    : Arrays.stream(receipentIdList).map(String::trim).filter(id -> !id.isEmpty()).collect(Collectors.toList());
             BlackboardArtifact messageArtifact = accountHelper.addMessage(messageType, communicationDirection, senderId,
-                    receipentId, dateTime, messageStatus, subject,
+                    recipientIds, dateTime, messageStatus, subject,
                     messageText, threadId, otherAttributes);
             if (!fileAttachments.isEmpty()) {
                 messageAttachments = new MessageAttachments(fileAttachments, new ArrayList<>());
@@ -769,7 +770,7 @@ public final class LeappFileProcessor {
                         startDateTime = bba.getValueLong();
                         break;
                     case "TSK_DATETIME_END":
-                        startDateTime = bba.getValueLong();
+                        endDateTime = bba.getValueLong();
                         break;
                     case "TSK_DIRECTION":
                         if (bba.getValueString().toLowerCase().equals("outgoing")) {
@@ -817,7 +818,11 @@ public final class LeappFileProcessor {
                 accountHelper = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                         moduleName, absFile, accountType, accountType, alternateId, context.getJobId());
             }
-            accountHelper.addCalllog(communicationDirection, callerId, calleeId, startDateTime, endDateTime, mediaType, otherAttributes);
+            try {
+                accountHelper.addCalllog(communicationDirection, callerId, calleeId, startDateTime, endDateTime, mediaType, otherAttributes);
+            } catch (IllegalArgumentException ex) {
+                logger.log(Level.WARNING, String.format("Skipping a call log row in %s: %s", fileName, ex.getMessage())); //NON-NLS
+            }
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_calllog_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
         }
