@@ -1454,37 +1454,91 @@ class TskQueryService {
         "Note: caseId in the response reflects the currently open case — " +
         "if this changes between calls, alert the user.";
 
+    /**
+     * Builds a tool definition for a case-scoped tool: appends the shared case-id note to
+     * the description and delegates the schema to the tool builder.
+     *
+     * @param name        tool name as advertised to the client
+     * @param description description shown to the model, before the case-id note
+     * @param properties  JSON-schema map for the tool's named arguments
+     * @return the tool definition
+     */
     private Map<String, Object> toolWithNote(String name, String description, Map<String, Object> properties) {
         return tool(name, description + " " + CASE_ID_NOTE, properties);
     }
 
+    /**
+     * Builds a tool definition for a case-scoped tool, with the same rules as the
+     * three-argument overload and additionally listing the given names under "required".
+     *
+     * @param name        tool name as advertised to the client
+     * @param description description shown to the model, before the case-id note
+     * @param properties  JSON-schema map for the tool's named arguments
+     * @param required    names of the arguments the caller must supply
+     * @return the tool definition
+     */
     private Map<String, Object> toolWithNote(String name, String description, Map<String, Object> properties, List<String> required) {
         return tool(name, description + " " + CASE_ID_NOTE, properties, required);
     }
 
+    /**
+     * Builds one entry for the tools/list response, wrapping the properties in an object
+     * schema that declares "additionalProperties": false, as the MCP spec recommends.
+     * Clients that validate the advertised schema can reject arguments not listed in
+     * "properties"; dispatch does not perform this validation, so a service may still
+     * ignore unknown keys (issue #8033).
+     *
+     * @param name        tool name as advertised to the client
+     * @param description description shown to the model
+     * @param properties  JSON-schema map for the tool's named arguments
+     * @return the tool definition
+     */
     private Map<String, Object> tool(String name, String description, Map<String, Object> properties) {
-        return Map.of(
-            "name", name,
-            "description", description,
-            "inputSchema", Map.of(
-                "type", "object",
-                "properties", properties
-            )
-        );
-    }
-
-    private Map<String, Object> tool(String name, String description, Map<String, Object> properties, List<String> required) {
+        // The flag is advertised for validating clients; dispatch does not enforce it.
         return Map.of(
             "name", name,
             "description", description,
             "inputSchema", Map.of(
                 "type", "object",
                 "properties", properties,
-                "required", required
+                "additionalProperties", false
             )
         );
     }
 
+    /**
+     * Builds one entry for the tools/list response with the same object schema rules as
+     * the three-argument overload -- "type": "object", "additionalProperties": false --
+     * and additionally lists the given names under "required".
+     *
+     * @param name        tool name as advertised to the client
+     * @param description description shown to the model
+     * @param properties  JSON-schema map for the tool's named arguments
+     * @param required    names of the arguments the caller must supply
+     * @return the tool definition
+     */
+    private Map<String, Object> tool(String name, String description, Map<String, Object> properties, List<String> required) {
+        // Same as above: advertised for validating clients, not enforced by dispatch.
+        return Map.of(
+            "name", name,
+            "description", description,
+            "inputSchema", Map.of(
+                "type", "object",
+                "properties", properties,
+                "required", required,
+                "additionalProperties", false
+            )
+        );
+    }
+
+    /**
+     * Builds one JSON-schema property entry ("type" plus "description") for a single tool
+     * argument.
+     *
+     * @param type        JSON-schema type of the argument, e.g. "string" or "integer"
+     * @param description description shown to the model
+     * @return the property schema entry
+     */
     private Map<String, Object> param(String type, String description) {
         return Map.of("type", type, "description", description);
     }

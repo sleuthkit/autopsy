@@ -90,10 +90,11 @@ function log(level, message) {
     } catch { /* never let logging crash the process */ }
 }
 
-// ---------------------------------------------------------------------------
-// --test mode: verify the server is reachable, token exists, and tools load
-// ---------------------------------------------------------------------------
-
+/**
+ * --test mode: verifies that the token file exists, the HTTP server is reachable, the
+ * tools list parses as a ListToolsResult, and the spot-checked tools are advertised.
+ * Exits 0 when every check passes, 1 otherwise (see printTestResults).
+ */
 async function runTest() {
     const checks = [];
     let token;
@@ -149,8 +150,9 @@ async function runTest() {
     }
     checks.push(`  [OK] Valid MCP JSON-RPC response received`);
 
-    // 4. Tools list — expect at least 15 tools and spot-check 5 known ones
-    const tools = data.result;
+    // 4. Tools list — expect at least 15 tools and spot-check 5 known ones.
+    // data.result is a ListToolsResult: the tool array lives under .tools.
+    const tools = data.result?.tools;
     if (!Array.isArray(tools) || tools.length < 15) {
         checks.push(`  [FAIL] tools/list returned ${Array.isArray(tools) ? tools.length : 0} tools (expected ≥ 15)`);
         printTestResults(checks, false);
@@ -296,14 +298,19 @@ const UNAVAILABLE_TOOL = {
     inputSchema: { type: "object", properties: {} }
 };
 
-// Proxy tools/list straight through — tool definitions live only in Java.
-// If Autopsy is not running, return a single status tool so Claude Desktop
-// can report a useful message rather than failing to load the server entirely.
+/**
+ * Answers tools/list by proxying to the Autopsy HTTP server — tool definitions live only
+ * in Java. Java already returns the whole ListToolsResult, so the result is passed through
+ * unchanged. If Autopsy is not running, a single status tool is returned so Claude Desktop
+ * can report a useful message rather than failing to load the server entirely.
+ */
 server.setRequestHandler(ListToolsRequestSchema, async () => {
     try {
-        const tools = await callJava("tools/list", {});
-        log("INFO", `tools/list returned ${tools.length} tools`);
-        return { tools };
+        // Java returns the whole ListToolsResult; pass it through unchanged. Re-wrapping
+        // it here produced {"tools":{"tools":[...]}}, which is not a ListToolsResult.
+        const result = await callJava("tools/list", {});
+        log("INFO", `tools/list returned ${result.tools.length} tools`);
+        return result;
     } catch (err) {
         log("ERROR", `tools/list failed — Autopsy not reachable: ${err.message}`);
         return { tools: [UNAVAILABLE_TOOL] };

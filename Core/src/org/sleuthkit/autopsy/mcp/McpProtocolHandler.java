@@ -78,7 +78,9 @@ class McpProtocolHandler {
             id = request.has("id") ? request.get("id") : NullNode.getInstance();
 
             Object result = switch (method) {
-                case "tools/list"   -> TOOLS_LIST_SERVICE.listTools();
+                // MCP spec: ListToolsResult is an object { tools: Tool[] }. Returning the bare list
+                // produced "result": [...] and broke every spec-validating client (see McpProtocolHandlerTest).
+                case "tools/list"   -> Map.of("tools", TOOLS_LIST_SERVICE.listTools());
                 case "tools/call"   -> dispatchToolCall(params);
                 case "initialize"   -> handleInitialize();
                 default             -> throw new McpException("Unknown method: " + method, McpException.ERR_METHOD_NOT_FOUND);
