@@ -17,25 +17,16 @@
 
 ApplicationContentViewer.title=Application
 ApplicationContentViewer.toolTip=Displays file contents.
-# {0} - format name
-# {1} - shutdown state
-ESEDatabaseViewer.databaseLabel.noProfile.text={0} - {1}
-# {0} - format name
-# {1} - profile name
-# {2} - shutdown state
-ESEDatabaseViewer.databaseLabel.text={0} - {1} - {2}
-# {0} - executable path
-# {1} - version
-ESEDatabaseViewer.databaseLabel.toolTip=Parsed by {0} ({1})
 ESEDatabaseViewer.csvExport.confirm.msg=Do you want to overwrite the existing file?
 # {0} - table name
 # {1} - error message
 ESEDatabaseViewer.csvExport.errText=Failed to export table {0} to CSV: {1}
 ESEDatabaseViewer.csvExport.title=Export to csv file
+# {0} - shutdown state
+# {1} - page size
+# {2} - format revision
+ESEDatabaseViewer.databaseLabel.text=ESE database - {0} - {1} byte pages - format revision {2}
 ESEDatabaseViewer.exportCsvButton.text=Export to CSV
-ESEDatabaseViewer.locate.notExecutable=The selected file is not an executable program.
-ESEDatabaseViewer.locate.title=Select the edb-explorer executable
-ESEDatabaseViewer.locateButton.text=Locate edb-explorer...
 ESEDatabaseViewer.message.failedToExtractFile=The file could not be extracted from the data source.
 # {0} - error message
 ESEDatabaseViewer.message.failedToOpen=The database could not be read: {0}
@@ -44,7 +35,6 @@ ESEDatabaseViewer.message.failedToOpen=The database could not be read: {0}
 ESEDatabaseViewer.message.failedToReadTable=Table {0} could not be read: {1}
 ESEDatabaseViewer.message.noCurrentCase=The case has been closed.
 ESEDatabaseViewer.message.noTables=No tables found
-ESEDatabaseViewer.message.toolNotFound=The EDB Explorer command line tool (edb-explorer) is needed to view ESE databases, but it was not found on this computer.\n\nInstall it from https://github.com/keyuraghao/EDB_FILE_EXPLORER (or 'pip install edb-explorer'), or click the button below to select the edb-explorer executable if it is installed somewhere else.
 ESEDatabaseViewer.nextPageButton.toolTip=Next page
 ESEDatabaseViewer.prevPageButton.toolTip=Previous page
 ESEDatabaseViewer.rowsLabel.empty.text=No rows
@@ -52,6 +42,10 @@ ESEDatabaseViewer.rowsLabel.empty.text=No rows
 # {1} - last row
 ESEDatabaseViewer.rowsLabel.text=Rows {0} - {1}
 ESEDatabaseViewer.tableLabel.text=Table:
+# {0} - number of bytes
+ESEDatabaseViewer.value.binaryTruncated=... ({0} bytes)
+# {0} - error message
+ESEDatabaseViewer.value.error=!ERROR! {0}
 FXVideoPanel.pauseButton.infoLabel.playbackErr=Unable to play video.
 FXVideoPanel.progress.bufferingCancelled=media buffering was canceled
 FXVideoPanel.progress.bufferingInterrupted=media buffering was interrupted
