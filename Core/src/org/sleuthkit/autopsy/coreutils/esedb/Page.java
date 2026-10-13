@@ -155,10 +155,10 @@ final class Page {
         if (start + size > buffer.capacity() || start > dataEnd && size > 0) {
             throw new EseException(String.format("Tag %d of page %d points outside the page", index, number));
         }
+        // Copy with absolute offsets: pages are cached and may be read by several threads at once,
+        // so the shared buffer's position must never be touched.
         byte[] data = new byte[size];
-        buffer.position(start);
-        buffer.get(data);
-        buffer.position(0);
+        System.arraycopy(buffer.array(), start, data, 0, size);
         int tagFlags;
         if (smallPage) {
             // Small pages keep the flags in the 3 most significant bits of the offset.
