@@ -328,6 +328,19 @@ final class CustomFileTypesManager {
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("application/x.windows-registry", signatureList); //NON-NLS
             autopsyDefinedFileTypes.add(fileType);
+
+            /*
+             * Add type for Microsoft Extensible Storage Engine (ESE / JET
+             * Blue) databases: ntds.dit, SRUDB.dat, WebCacheV01.dat, Windows
+             * Search Windows.edb, Exchange mailbox stores, etc. The header
+             * magic 0x89ABCDEF is stored little endian at offset 4. Viewed by
+             * the ESE database content viewer.
+             */
+            byteArray = Hex.decodeHex("EFCDAB89"); //NON-NLS
+            signatureList.clear();
+            signatureList.add(new Signature(byteArray, 4L));
+            fileType = new FileType("application/x.ms-ese", signatureList); //NON-NLS
+            autopsyDefinedFileTypes.add(fileType);
             
             /*
             * Add custom file type for hdb files that can be found in android os on the system volume

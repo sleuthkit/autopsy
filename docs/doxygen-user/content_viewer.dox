@@ -75,6 +75,8 @@ Registry hive files can be viewed in a format similar to a registry editor.
 
 \image html content_viewer_registry.png
 
+Microsoft ESE (Extensible Storage Engine / JET Blue) databases - ntds.dit, SRUDB.dat, WebCacheV01.dat, Windows Search Windows.edb, Exchange mailbox .edb files and the like - can be browsed table by table and exported to CSV, in the same way as SQLite databases. Timestamps and other values are decoded according to the application the database belongs to. This viewer relies on the free, open source <a href="https://github.com/keyuraghao/EDB_FILE_EXPLORER">EDB Explorer</a> command line tool, which is not bundled with Autopsy: install it (for example with <tt>pip install edb-explorer</tt>, or with one of its installers) and the viewer will find it on the PATH or in the default install location. If it is installed somewhere else, the viewer offers a "Locate edb-explorer..." button to select the executable; the choice is remembered. The database is copied to the case temp directory while it is displayed.
+
 \section cv_metadata File Metadata / Source File Metadata
 
 The File Metadata tab displays basic information about the file selected or the file associated with the result, such as type, size, and hash. It also displays the output of the Sleuth Kit istat tool.
