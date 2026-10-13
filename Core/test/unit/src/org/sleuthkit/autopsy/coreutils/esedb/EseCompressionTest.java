@@ -38,14 +38,14 @@ public class EseCompressionTest {
     @Test
     public void lzxpressShortMatch() throws EseException {
         // flags 0x10000000: three literals then one match; match = offset 3, length 9 (3 + 6).
-        byte[] decompressed = EseCompression.lzxpress(hex("00000010" + "616263" + "1600"), 0);
+        byte[] decompressed = EseCompression.lzxpress(hex("00000010" + "616263" + "1600"), 0, EseCompression.MAX_LZXPRESS_OUTPUT);
         Assert.assertEquals("abcabcabcabc", new String(decompressed, StandardCharsets.US_ASCII));
     }
 
     @Test
     public void lzxpressMatchLengthInHalfByte() throws EseException {
         // 'a' then a match of 20 - 1 = 19 bytes at offset 1: length field 7, extra half byte 9.
-        byte[] decompressed = EseCompression.lzxpress(hex("00000040" + "61" + "0700" + "09"), 0);
+        byte[] decompressed = EseCompression.lzxpress(hex("00000040" + "61" + "0700" + "09"), 0, EseCompression.MAX_LZXPRESS_OUTPUT);
         Assert.assertEquals(20, decompressed.length);
         for (byte b : decompressed) {
             Assert.assertEquals('a', b);
@@ -55,7 +55,7 @@ public class EseCompressionTest {
     @Test
     public void lzxpressLongMatchLength() throws EseException {
         // 'b' then a match of 300 bytes: half byte 15, byte 255, 16 bit length.
-        byte[] decompressed = EseCompression.lzxpress(hex("00000040" + "62" + "0700" + "0f" + "ff" + "2901"), 0);
+        byte[] decompressed = EseCompression.lzxpress(hex("00000040" + "62" + "0700" + "0f" + "ff" + "2901"), 0, EseCompression.MAX_LZXPRESS_OUTPUT);
         Assert.assertEquals(301, decompressed.length);
         for (byte b : decompressed) {
             Assert.assertEquals('b', b);
@@ -63,9 +63,20 @@ public class EseCompressionTest {
     }
 
     @Test
+    public void lzxpressRejectsOutputBeyondAnnouncedSize() {
+        try {
+            // Announces 5 bytes but decompresses to 12.
+            EseCompression.decompress(hex("18" + "0500" + "00000010" + "616263" + "1600"));
+            Assert.fail("expected an EseException");
+        } catch (EseException expected) {
+            Assert.assertTrue(expected.getMessage(), expected.getMessage().contains("announced size"));
+        }
+    }
+
+    @Test
     public void lzxpressRejectsMatchBeforeStart() {
         try {
-            EseCompression.lzxpress(hex("00000080" + "1600"), 0);
+            EseCompression.lzxpress(hex("00000080" + "1600"), 0, EseCompression.MAX_LZXPRESS_OUTPUT);
             Assert.fail("expected an EseException");
         } catch (EseException expected) {
             // ok

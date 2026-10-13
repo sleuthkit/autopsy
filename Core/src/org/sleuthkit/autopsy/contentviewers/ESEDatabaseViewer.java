@@ -348,9 +348,16 @@ class ESEDatabaseViewer extends JPanel implements FileTypeViewer {
                     }
                 }
                 if (isCancelled()) {
+                    deleteQuietly(temporaryCopy);
                     return null;
                 }
                 EseDatabase db = EseDatabase.open(path);
+                if (isCancelled()) {
+                    // Nobody will use the result: release it here, on the thread that made it.
+                    db.close();
+                    deleteQuietly(temporaryCopy);
+                    return null;
+                }
                 List<EseTable> tables = new ArrayList<>();
                 for (EseTable table : db.getTables()) {
                     if (!table.isSystemTable()) {

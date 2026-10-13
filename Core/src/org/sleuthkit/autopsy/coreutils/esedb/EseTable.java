@@ -212,7 +212,12 @@ public final class EseTable {
             chunkOffsets.add(offset);
         }
         chunkOffsets.add(size);
-        ByteArrayOutputStream out = new ByteArrayOutputStream((int) Math.min(Integer.MAX_VALUE - 16, Math.max(16, size)));
+        // Size the buffer from what was actually read, not from the header: a corrupt size field must not drive a huge allocation.
+        int capacity = 16;
+        for (byte[] chunk : chunks) {
+            capacity += chunk.length;
+        }
+        ByteArrayOutputStream out = new ByteArrayOutputStream(capacity);
         for (int i = 0; i < chunks.size(); i++) {
             byte[] chunk = chunks.get(i);
             // Each chunk's key carries its offset in the value; the next offset (or the total size) gives its expected size.

@@ -57,7 +57,9 @@ final class EseCompression {
                 if (data.length < 3) {
                     throw new EseException("LZXPRESS value is too short");
                 }
-                return lzxpress(data, 3);
+                // The header carries the uncompressed size; the stream may not produce more than that.
+                int uncompressedSize = readShort(data, 1);
+                return lzxpress(data, 3, uncompressedSize);
             case SCHEME_XPRESS9:
             case SCHEME_XPRESS10:
                 throw new EseException(String.format("Compression scheme %d (XPRESS%s) is not supported", scheme, scheme == SCHEME_XPRESS9 ? "9" : "10"));
@@ -97,10 +99,22 @@ final class EseCompression {
     }
 
     /**
-     * Plain LZ77 decompression as specified in [MS-XCA] section 2.3.
+     * Upper bound on the output of a stream whose uncompressed size is not
+     * known from a header.
      */
-    static byte[] lzxpress(byte[] src, int start) throws EseException {
-        byte[] out = new byte[Math.max(64, (src.length - start) * 4)];
+    static final int MAX_LZXPRESS_OUTPUT = 64 * 1024 * 1024;
+
+    /**
+     * Plain LZ77 decompression as specified in [MS-XCA] section 2.3.
+     *
+     * @param src       Buffer holding the compressed stream.
+     * @param start     Offset of the stream in the buffer.
+     * @param maxOutput Size the decompressed data may not exceed (the
+     *                  uncompressed size announced by the caller's header,
+     *                  or MAX_LZXPRESS_OUTPUT).
+     */
+    static byte[] lzxpress(byte[] src, int start, int maxOutput) throws EseException {
+        byte[] out = new byte[Math.max(64, Math.min(maxOutput, (src.length - start) * 4))];
         int outSize = 0;
         int pos = start;
         int size = src.length;
@@ -116,6 +130,9 @@ final class EseCompression {
                 }
                 bufferedFlagCount--;
                 if ((bufferedFlags & (1L << bufferedFlagCount)) == 0) {
+                    if (outSize + 1 > maxOutput) {
+                        throw new EseException("LZXPRESS data is larger than its announced size");
+                    }
                     out = ensureCapacity(out, outSize + 1);
                     out[outSize++] = src[pos++];
                 } else {
@@ -155,6 +172,9 @@ final class EseCompression {
                     matchLength += 3;
                     if (matchOffset > outSize) {
                         throw new EseException("Invalid LZXPRESS match offset");
+                    }
+                    if (matchLength < 0 || matchLength > maxOutput - outSize) {
+                        throw new EseException("LZXPRESS match length exceeds the announced size");
                     }
                     out = ensureCapacity(out, outSize + matchLength);
                     // Copy byte by byte: the match may overlap the bytes being written.

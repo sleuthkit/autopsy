@@ -123,7 +123,8 @@ public final class EseDatabase implements AutoCloseable {
             byte[] header = new byte[HEADER_SIZE];
             file.readFully(header);
             return new EseDatabase(file, header);
-        } catch (IOException | EseException ex) {
+        } catch (IOException | EseException | RuntimeException ex) {
+            // Whatever went wrong (I/O, a format error, or an unexpected failure while decoding a corrupt catalog), do not leak the file.
             if (file != null) {
                 try {
                     file.close();
@@ -133,6 +134,9 @@ public final class EseDatabase implements AutoCloseable {
             }
             if (ex instanceof EseException) {
                 throw (EseException) ex;
+            }
+            if (ex instanceof RuntimeException) {
+                throw new EseException(String.format("The catalog of %s could not be decoded (corrupt database?)", path), ex);
             }
             throw new EseException(String.format("Could not read %s", path), ex);
         }
