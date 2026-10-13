@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -113,6 +114,7 @@ class ESEDatabaseViewer extends JPanel implements FileTypeViewer {
     private int currentPage;
     private boolean hasNextPage;
     private SwingWorker<?, ?> worker;
+    private SwingWorker<?, ?> exportWorker;
 
     /**
      * Constructs a file content viewer for ESE database files.
@@ -224,6 +226,7 @@ class ESEDatabaseViewer extends JPanel implements FileTypeViewer {
     })
     public void setFile(AbstractFile file) {
         cancelWorker();
+        cancelExportWorker();
         resetComponent();
         if (file == null) {
             return;
@@ -251,6 +254,7 @@ class ESEDatabaseViewer extends JPanel implements FileTypeViewer {
     @Override
     public void resetComponent() {
         cancelWorker();
+        cancelExportWorker();
         deleteTemporaryDatabase();
         currentFile = null;
         tool = null;
@@ -281,15 +285,29 @@ class ESEDatabaseViewer extends JPanel implements FileTypeViewer {
         }
     }
 
+    private void cancelExportWorker() {
+        if (exportWorker != null) {
+            exportWorker.cancel(true);
+            exportWorker = null;
+        }
+    }
+
     private void deleteTemporaryDatabase() {
         if (databasePath != null && databasePathIsTemporary) {
-            try {
-                Files.deleteIfExists(databasePath);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Failed to delete temporary copy %s", databasePath), ex); //NON-NLS
-            }
+            deleteQuietly(databasePath);
         }
         databasePathIsTemporary = false;
+    }
+
+    private static void deleteQuietly(Path file) {
+        if (file == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(file);
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, String.format("Failed to delete %s", file), ex); //NON-NLS
+        }
     }
 
     private void showCard(String card) {
@@ -327,27 +345,30 @@ class ESEDatabaseViewer extends JPanel implements FileTypeViewer {
         final EdbExplorerTool openTool = tool;
         setWaitCursor(true);
         worker = new SwingWorker<OpenResult, Void>() {
+            /**
+             * Temporary copy made by this attempt, if any. Each attempt gets
+             * its own copy so that a cancelled or failed attempt can delete
+             * it without touching the copy of a newer attempt, and so that a
+             * partially written copy is never reused.
+             */
+            private volatile Path temporaryCopy;
+
             @Override
             protected OpenResult doInBackground() throws Exception {
                 ProcessTerminator terminator = this::isCancelled;
                 Path path;
-                boolean temporary;
                 String localPath = file.getLocalAbsPath();
                 if (StringUtils.isNotBlank(localPath) && Files.isRegularFile(Paths.get(localPath))) {
                     // Logical files are already on disk: no need to copy them.
                     path = Paths.get(localPath);
-                    temporary = false;
                 } else {
                     Files.createDirectories(tempDirectory);
-                    path = tempDirectory.resolve(String.format("ese-viewer-%d-%s", file.getId(), FilenameUtils.getName(file.getName()))); //NON-NLS
-                    temporary = true;
-                    if (!Files.exists(path)) {
-                        try {
-                            ContentUtils.writeToFile(file, path.toFile());
-                        } catch (IOException ex) {
-                            Files.deleteIfExists(path);
-                            throw new EdbExplorerException(Bundle.ESEDatabaseViewer_message_failedToExtractFile(), ex);
-                        }
+                    path = Files.createTempFile(tempDirectory, String.format("ese-viewer-%d-", file.getId()), "-" + FilenameUtils.getName(file.getName())); //NON-NLS
+                    temporaryCopy = path;
+                    try {
+                        ContentUtils.writeToFile(file, path.toFile());
+                    } catch (IOException ex) {
+                        throw new EdbExplorerException(Bundle.ESEDatabaseViewer_message_failedToExtractFile(), ex);
                     }
                 }
                 if (isCancelled()) {
@@ -356,18 +377,21 @@ class ESEDatabaseViewer extends JPanel implements FileTypeViewer {
                 String version = openTool.getVersion(terminator);
                 DatabaseInfo info = openTool.getDatabaseInfo(path, terminator);
                 List<TableInfo> tables = openTool.listTables(path, terminator);
-                return new OpenResult(path, temporary, version, info, tables);
+                return new OpenResult(path, temporaryCopy != null, version, info, tables);
             }
 
             @Override
             protected void done() {
                 setWaitCursor(false);
-                if (isCancelled()) {
+                if (isCancelled() || worker != this) {
+                    // Superseded by a newer attempt or a reset: this attempt's copy is not needed.
+                    deleteQuietly(temporaryCopy);
                     return;
                 }
                 try {
                     OpenResult result = get();
                     if (result == null) {
+                        deleteQuietly(temporaryCopy);
                         return;
                     }
                     databasePath = result.path;
@@ -389,7 +413,9 @@ class ESEDatabaseViewer extends JPanel implements FileTypeViewer {
                     showCard(TABLE_CARD);
                 } catch (CancellationException ex) {
                     // The viewer was reset while the database was being opened.
+                    deleteQuietly(temporaryCopy);
                 } catch (InterruptedException | ExecutionException ex) {
+                    deleteQuietly(temporaryCopy);
                     Throwable cause = ex.getCause() == null ? ex : ex.getCause();
                     logger.log(Level.WARNING, String.format("Failed to open ESE database '%s' (objId=%d)", file.getName(), file.getId()), cause); //NON-NLS
                     showMessage(Bundle.ESEDatabaseViewer_message_failedToOpen(cause.getMessage()), false);
@@ -450,7 +476,8 @@ class ESEDatabaseViewer extends JPanel implements FileTypeViewer {
             @Override
             protected void done() {
                 setWaitCursor(false);
-                if (isCancelled()) {
+                if (isCancelled() || worker != this) {
+                    // A newer page request or a reset replaced this worker.
                     return;
                 }
                 try {
@@ -562,26 +589,47 @@ class ESEDatabaseViewer extends JPanel implements FileTypeViewer {
         final Path path = databasePath;
         final String tableName = table.getName();
         final EdbExplorerTool exportTool = tool;
+        cancelExportWorker();
         exportCsvButton.setEnabled(false);
-        new SwingWorker<Void, Void>() {
+        exportWorker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
-                exportTool.exportTableToCsv(path, tableName, outputFile, this::isCancelled);
+                // Export next to the destination and replace it only once the
+                // export succeeded, so a failed export leaves any existing file intact.
+                Path directory = outputFile.toAbsolutePath().getParent();
+                Path partialFile = Files.createTempFile(directory, outputFile.getFileName().toString() + ".", ".part"); //NON-NLS
+                try {
+                    exportTool.exportTableToCsv(path, tableName, partialFile, this::isCancelled);
+                    if (isCancelled()) {
+                        return null;
+                    }
+                    Files.move(partialFile, outputFile, StandardCopyOption.REPLACE_EXISTING);
+                } finally {
+                    deleteQuietly(partialFile);
+                }
                 return null;
             }
 
             @Override
             protected void done() {
+                if (isCancelled() || exportWorker != this) {
+                    // The viewer was reset or a newer export replaced this one.
+                    return;
+                }
+                exportWorker = null;
                 exportCsvButton.setEnabled(true);
                 try {
                     get();
+                } catch (CancellationException ex) {
+                    // Cancelled by a reset; nothing to report.
                 } catch (InterruptedException | ExecutionException ex) {
                     Throwable cause = ex.getCause() == null ? ex : ex.getCause();
                     logger.log(Level.WARNING, String.format("Failed to export table %s of ESE database %s to %s", tableName, path, outputFile), cause); //NON-NLS
                     MessageNotifyUtil.Message.error(Bundle.ESEDatabaseViewer_csvExport_errText(tableName, cause.getMessage()));
                 }
             }
-        }.execute();
+        };
+        exportWorker.execute();
     }
 
     /**
