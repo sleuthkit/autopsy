@@ -203,6 +203,7 @@
  <FileName filename="Google Quick Search Queries.tsv" description="Google Quick Search Box queries">
   <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Google Quick Search">
    <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="File Timestamp" required="no" />
+   <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="File Modified Time" required="no" />
    <AttributeName attributename="TSK_TEXT" columnName="Queries" required="no" />
    <AttributeName attributename="null" columnName="Type" required="no" />
    <AttributeName attributename="null" columnName="Response" required="no" />

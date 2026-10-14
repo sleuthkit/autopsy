@@ -38,7 +38,7 @@
   <ArtifactName artifactname="TSK_BLUETOOTH_PAIRING" comment="Bluetooth Paired LE">
    <AttributeName attributename="TSK_DEVICE_ID" columnName="UUID" required="no" />
    <AttributeName attributename="TSK_DEVICE_NAME" columnName="Name" required="no" />
-   <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Connection Time" required="no" />
+   <AttributeName attributename="null" columnName="Last Connection Time" required="no" />
    <AttributeName attributename="null" columnName="Name Origin" required="no" />
    <AttributeName attributename="null" columnName="Address" required="no" />
    <AttributeName attributename="null" columnName="Resolved Address" required="no" />
